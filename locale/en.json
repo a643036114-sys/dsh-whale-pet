@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Whale desktop pet",
+    "description": "Puts a small whale in a DSH interface overlay. Click to poke it, double-click to pat it, press and hold to hug it, and drag it anywhere; it blinks, naps, wanders, and talks at the right time of day. Turn off the whale-pet row under Plugins to hide it. Drawn with CSS only, with no network requests or data collection.",
+    "detail": "docs/DETAIL.md"
+  }
+}

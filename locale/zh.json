@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "小鲸鱼桌宠",
+    "description": "在 DSH 界面浮层里养一只小鲸鱼：单击拍一下、双击摸摸头、长按抱起来、拖动拎走；它会眨眼、打盹、自己游动，并按当前时段跟你说话。对应 Plugins 里的 whale-pet 行，关掉该行即可隐藏。纯 CSS 绘制，不联网、不上报数据。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

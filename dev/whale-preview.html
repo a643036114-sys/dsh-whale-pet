@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小鲸鱼 · 桌宠预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: linear-gradient(160deg, #dff1ff 0%, #eef8ff 45%, #f7fcff 100%);
+    font-family: "Microsoft YaHei", system-ui, sans-serif;
+    user-select: none;
+  }
+
+  /* 背景水泡装饰 */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.9), rgba(160,215,255,.28));
+    animation: rise linear infinite;
+    pointer-events: none;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) scale(.7); opacity: 0; }
+    12%  { opacity: .85; }
+    100% { transform: translateY(-105vh) scale(1.15); opacity: 0; }
+  }
+
+  /* ── 舞台 ── */
+  #stage {
+    position: absolute; inset: 0;
+    cursor: grab;
+  }
+  #stage.dragging { cursor: grabbing; }
+
+  /* ── 鲸鱼 ── */
+  #whale {
+    position: absolute;
+    left: 0; top: 0;
+    width: 150px; height: 116px;
+    transition: filter .25s;
+  }
+  #whale.flip .art { transform: scaleX(-1); }
+
+  .art {
+    position: relative;
+    width: 100%; height: 100%;
+    transform-origin: 50% 75%;
+    animation: bob 2.9s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+    50%      { transform: translateY(-9px) rotate(1.2deg); }
+  }
+
+  /* 身体：上圆下尖的鲸鱼轮廓 */
+  .body {
+    position: absolute;
+    left: 8px; top: 16px;
+    width: 118px; height: 82px;
+    background: linear-gradient(165deg, #8fd0f7 0%, #6bb9ee 40%, #4a9ede 100%);
+    border-radius: 56% 56% 46% 46% / 62% 62% 38% 38%;
+    box-shadow:
+      inset -8px -10px 18px rgba(38,110,170,.28),
+      inset 6px 8px 16px rgba(255,255,255,.5),
+      0 10px 22px rgba(70,150,215,.28);
+  }
+  /* 肚子（浅色） */
+  .belly {
+    position: absolute;
+    left: 24px; top: 50px;
+    width: 86px; height: 42px;
+    background: linear-gradient(180deg, #eaf7ff 0%, #cfe9fb 100%);
+    border-radius: 50% 50% 46% 46% / 60% 60% 40% 40%;
+    opacity: .92;
+  }
+
+  /* 尾巴 */
+  .tail {
+    position: absolute;
+    left: 100px; top: 34px;
+    width: 44px; height: 40px;
+    transform-origin: 0% 50%;
+    animation: tailWave 1.5s ease-in-out infinite;
+  }
+  @keyframes tailWave {
+    0%, 100% { transform: rotate(-9deg); }
+    50%      { transform: rotate(11deg); }
+  }
+  .tail span {
+    position: absolute;
+    width: 30px; height: 22px;
+    background: linear-gradient(120deg, #6bb9ee, #4a9ede);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  }
+  .tail .t1 { left: 0;  top: 0;  transform: rotate(-26deg); }
+  .tail .t2 { left: 0;  top: 18px; transform: rotate(26deg); }
+
+  /* 侧鳍 */
+  .fin {
+    position: absolute;
+    left: 52px; top: 70px;
+    width: 34px; height: 20px;
+    background: linear-gradient(140deg, #58aae4, #3d8fd0);
+    border-radius: 50% 50% 60% 40% / 60% 60% 40% 40%;
+    transform-origin: 20% 20%;
+    animation: finWave 2.3s ease-in-out infinite;
+  }
+  @keyframes finWave {
+    0%, 100% { transform: rotate(6deg); }
+    50%      { transform: rotate(-12deg); }
+  }
+
+  /* 眼睛 */
+  .eye {
+    position: absolute;
+    left: 34px; top: 40px;
+    width: 15px; height: 15px;
+    background: #17324a;
+    border-radius: 50%;
+    transform-origin: center;
+    animation: blink 4.6s infinite;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,.35);
+  }
+  .eye::after {          /* 高光 */
+    content: "";
+    position: absolute;
+    left: 3px; top: 2px;
+    width: 5px; height: 5px;
+    background: #fff;
+    border-radius: 50%;
+  }
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95%           { transform: scaleY(.08); }
+  }
+
+  /* 腮红 */
+  .blush {
+    position: absolute;
+    left: 22px; top: 60px;
+    width: 20px; height: 11px;
+    background: rgba(255,150,175,.5);
+    border-radius: 50%;
+    filter: blur(2.5px);
+  }
+
+  /* 头顶喷水 */
+  .spout {
+    position: absolute;
+    left: 44px; top: -6px;
+    width: 22px; height: 26px;
+    opacity: 0;
+    animation: spoutOut 6.5s ease-in-out infinite;
+  }
+  @keyframes spoutOut {
+    0%, 78%, 100% { opacity: 0; transform: translateY(6px) scale(.5); }
+    84%           { opacity: .95; transform: translateY(-2px) scale(1); }
+    91%           { opacity: .5;  transform: translateY(-9px) scale(1.25); }
+  }
+  .spout span {
+    position: absolute;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #bfe6ff);
+    border-radius: 50%;
+  }
+  .spout .d1 { left: 8px;  top: 14px; width: 8px;  height: 8px; }
+  .spout .d2 { left: 0;   top: 5px;  width: 7px;  height: 7px; }
+  .spout .d3 { left: 15px; top: 3px; width: 6px;  height: 6px; }
+  .spout .d4 { left: 8px;  top: -3px; width: 5px; height: 5px; }
+
+  /* ── 气泡 ── */
+  #bubble {
+    position: absolute;
+    left: 0; top: 0;
+    max-width: 210px;
+    padding: 9px 13px;
+    background: #fff;
+    color: #24506e;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(70,150,215,.22);
+    opacity: 0;
+    transform: translateY(6px) scale(.94);
+    transition: opacity .3s, transform .3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #bubble::after {
+    content: "";
+    position: absolute;
+    left: 26px; bottom: -7px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 9px solid #fff;
+  }
+  #bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+
+  /* ── 提示 ── */
+  #hint {
+    position: absolute; left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    font-size: 12px; color: #5c88a8;
+    background: rgba(255,255,255,.75);
+    padding: 6px 14px; border-radius: 999px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
+
+  /* 点击时的小水花 */
+  .splash {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(140,205,245,.85);
+    pointer-events: none;
+    animation: splashOut .65s ease-out forwards;
+  }
+  @keyframes splashOut {
+    0%   { transform: translate(0,0) scale(.4); opacity: .95; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="whale">
+      <div class="art">
+        <div class="spout">
+          <span class="d1"></span><span class="d2"></span><span class="d3"></span><span class="d4"></span>
+        </div>
+        <div class="tail"><span class="t1"></span><span class="t2"></span></div>
+        <div class="body"></div>
+        <div class="belly"></div>
+        <div class="fin"></div>
+        <div class="blush"></div>
+        <div class="eye"></div>
+      </div>
+    </div>
+    <div id="bubble"></div>
+  </div>
+  <div id="hint">拖动鲸鱼 · 点一下它会说话</div>
+
+<script>
+(function () {
+  const stage  = document.getElementById('stage');
+  const whale  = document.getElementById('whale');
+  const bubble = document.getElementById('bubble');
+
+  const W = 150, H = 116;          // 鲸鱼尺寸
+  let x = (innerWidth - W) / 2;
+  let y = innerHeight - H - 90;
+  let vx = 0.55, vy = 0;           // 自主游动速度
+  let dragging = false, paused = false;
+  let lastBlink = 0, nextBlink = 3000 + Math.random() * 4000;
+
+  const lines = [
+    '咕噜咕噜～',
+    '今天也要加油哦！',
+    '你写了多少行代码啦？',
+    '休息一下，看看远处～',
+    '我一直在这里陪着你',
+    '要不要喝口水？',
+    '这个 bug 一定会解决的！',
+    '嘿嘿，被你发现了'
+  ];
+
+  /* 背景水泡 */
+  for (let i = 0; i < 9; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const s = 6 + Math.random() * 16;
+    b.style.width = s + 'px';
+    b.style.height = s + 'px';
+    b.style.left = Math.random() * 100 + '%';
+    b.style.bottom = '-30px';
+    b.style.animationDuration = (9 + Math.random() * 9) + 's';
+    b.style.animationDelay = (-Math.random() * 12) + 's';
+    document.body.appendChild(b);
+  }
+
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+  function place() {
+    whale.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    bubble.style.transform = 'translate(' + x + 'px,' + (y - 34) + 'px)';
+    // 气泡单独用变量，保持出现动画
+    if (bubble.classList.contains('show')) {
+      bubble.style.transform = 'translate(' + x + 'px,' + (y - 40) + 'px) scale(1)';
+    }
+  }
+
+  function tick() {
+    if (!dragging && !paused) {
+      x += vx;
+      // 偶尔小幅上下浮动
+      vy = Math.sin(Date.now() / 900) * 0.25;
+      y += vy;
+
+      // 碰到左右边界转身
+      if (x < 8)            { x = 8;                    vx = Math.abs(vx); whale.classList.remove('flip'); }
+      if (x > innerWidth - W - 8) { x = innerWidth - W - 8; vx = -Math.abs(vx); whale.classList.add('flip'); }
+      y = clamp(y, 8, innerHeight - H - 8);
+
+      // 随机改变方向和速度
+      if (Math.random() < 0.004) vx = (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.75);
+    }
+
+    // 眨眼
+    const now = Date.now();
+    if (now - lastBlink > nextBlink) {
+      lastBlink = now;
+      nextBlink = 3000 + Math.random() * 4500;
+      const e = whale.querySelector('.eye');
+      e.style.animation = 'none';
+      void e.offsetWidth;
+      e.style.animation = 'blink .5s';
+    }
+
+    place();
+    requestAnimationFrame(tick);
+  }
+
+  /* 拖拽 */
+  let offX = 0, offY = 0;
+  whale.addEventListener('pointerdown', function (ev) {
+    dragging = true;
+    stage.classList.add('dragging');
+    offX = ev.clientX - x;
+    offY = ev.clientY - y;
+    whale.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+  });
+  whale.addEventListener('pointermove', function (ev) {
+    if (!dragging) return;
+    x = clamp(ev.clientX - offX, 0, innerWidth - W);
+    y = clamp(ev.clientY - offY, 0, innerHeight - H);
+  });
+  whale.addEventListener('pointerup', function (ev) {
+    dragging = false;
+    stage.classList.remove('dragging');
+    try { whale.releasePointerCapture(ev.pointerId); } catch (e) {}
+  });
+
+  /* 点击说话 */
+  let bubbleTimer = null;
+  whale.addEventListener('click', function (ev) {
+    const t = lines[Math.floor(Math.random() * lines.length)];
+    bubble.textContent = t;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(function () { bubble.classList.remove('show'); }, 2600);
+
+    // 水花
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement('div');
+      s.className = 'splash';
+      s.style.left = (x + W / 2) + 'px';
+      s.style.top  = (y + H / 2) + 'px';
+      s.style.setProperty('--dx', (Math.random() * 70 - 35) + 'px');
+      s.style.setProperty('--dy', (Math.random() * 60 - 40) + 'px');
+      document.body.appendChild(s);
+      setTimeout(function () { s.remove(); }, 700);
+    }
+  });
+
+  addEventListener('resize', function () {
+    x = clamp(x, 0, innerWidth - W);
+    y = clamp(y, 0, innerHeight - H);
+  });
+
+  place();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

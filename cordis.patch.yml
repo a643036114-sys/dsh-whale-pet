@@ -1,0 +1,6 @@
+# dsh-whale-pet 的 bundle 层：把桌宠的 Loader 行自带进用户 profile，
+# 安装后无需再手工编辑用户的 cordis.patch.yml。
+# 关掉桌宠：在 Plugins 里把 whale-pet 这一行设为关闭，或停用整个 bundle。
+- insert:
+    - id: whale-pet
+      name: dsh-whale-pet
